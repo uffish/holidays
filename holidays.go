@@ -15,36 +15,38 @@ const dateForm = "01-02"
 type Holidays struct {
 	// You can find ISO3166-2 codes on Wikipedia, for e.g. Austria:
 	// https://en.wikipedia.org/wiki/ISO_3166-2:AT
-	country  string // ISO3166-1 country code
-	name     string // name of subdivision
-	timezone string
-	workdays []string
-	Holidays []Holiday
+	Country  string    // ISO3166-1 country code
+	Name     string    // name of subdivision
+	Timezone string    // Timezone used in this area
+	Workdays []string  // An array listing the normal workdays
+	Holidays []Holiday // A set of public holidays
 }
 
 // Holiday defines an individual public holiday.
 type Holiday struct {
-	Name    string
-	Date    feiertage.Feiertag
-	Yearday int
+	Name         string // Common name for this holiday
+	Date         feiertage.Feiertag
+	Yearday      int  // The day of the year on which this holiday falls.
+	NotStatutory bool // Not a legally binding holiday. May not be a free day for all employees.
+	HalfDay      bool // This is a half-day holiday.
 }
 
 // CheckIsBusinessDay determines whether a given date is either at the weekend
 // or a public holiday.
-func CheckIsBusinessDay(hDate time.Time, holidays Holidays) bool {
+func CheckIsBusinessDay(hDate time.Time, hols Holidays) bool {
 	// Check to see if the given date is either at the weekend or a public
 	// holiday. If they are, return the next date that isn't.
 	wd := false
 	day := hDate.Weekday().String()
-	for _, d := range holidays.workdays {
+	for _, d := range hols.Workdays {
 		if day == d {
 			wd = true
 			break
 		}
 	}
 	// check against the list of public holidays
-	for holiday := range holidays.Holidays {
-		if hDate.YearDay() == holidays.Holidays[holiday].Date.YearDay() {
+	for holiday := range hols.Holidays {
+		if hDate.YearDay() == hols.Holidays[holiday].Date.YearDay() {
 			wd = false
 		}
 	}
@@ -53,13 +55,13 @@ func CheckIsBusinessDay(hDate time.Time, holidays Holidays) bool {
 
 // GetFirstBusinessDay returns either the current date or, if that is not a
 // working day, the next day that is.
-func GetFirstBusinessDay(hDate time.Time, holidays Holidays) time.Time {
+func GetFirstBusinessDay(hDate time.Time, hols Holidays) time.Time {
 	// Short cut if it's today!
-	if CheckIsBusinessDay(hDate, holidays) {
-		return h_date
+	if CheckIsBusinessDay(hDate, hols) {
+		return hDate
 	}
-	first := h_date.AddDate(0, 0, 1)
-	for CheckIsBusinessDay(first, holidays) == false {
+	first := hDate.AddDate(0, 0, 1)
+	for CheckIsBusinessDay(first, hols) == false {
 		first = first.AddDate(0, 0, 1)
 	}
 	return first
@@ -70,14 +72,14 @@ func GetHolidaysByYear(year int) Holidays {
 	var hols []Holiday
 	austriaHolidays := feiertage.Österreich(year).Feiertage
 	for _, h := range austriaHolidays {
-		o := Holiday{h.Text, h, h.YearDay()}
+		o := Holiday{h.Text, h, h.YearDay(), false, false}
 		hols = append(hols, o)
 	}
 
 	localHolidays := Holidays{
-		country:  "at",
-		name:     "Austria/Vienna",
-		workdays: []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"},
+		Country:  "at",
+		Name:     "Austria/Vienna",
+		Workdays: []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"},
 		Holidays: hols,
 	}
 	return localHolidays
