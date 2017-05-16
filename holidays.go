@@ -11,6 +11,7 @@ import (
 
 const dateForm = "01-02"
 
+// Holidays defines a set of public holidays for a given territory.
 type Holidays struct {
 	// You can find ISO3166-2 codes on Wikipedia, for e.g. Austria:
 	// https://en.wikipedia.org/wiki/ISO_3166-2:AT
@@ -21,17 +22,20 @@ type Holidays struct {
 	Holidays []Holiday
 }
 
+// Holiday defines an individual public holiday.
 type Holiday struct {
 	Name    string
 	Date    feiertage.Feiertag
 	Yearday int
 }
 
-func CheckIsBusinessDay(h_date time.Time, holidays Holidays) bool {
+// CheckIsBusinessDay determines whether a given date is either at the weekend
+// or a public holiday.
+func CheckIsBusinessDay(hDate time.Time, holidays Holidays) bool {
 	// Check to see if the given date is either at the weekend or a public
 	// holiday. If they are, return the next date that isn't.
 	wd := false
-	day := h_date.Weekday().String()
+	day := hDate.Weekday().String()
 	for _, d := range holidays.workdays {
 		if day == d {
 			wd = true
@@ -40,16 +44,18 @@ func CheckIsBusinessDay(h_date time.Time, holidays Holidays) bool {
 	}
 	// check against the list of public holidays
 	for holiday := range holidays.Holidays {
-		if h_date.YearDay() == holidays.Holidays[holiday].Date.YearDay() {
+		if hDate.YearDay() == holidays.Holidays[holiday].Date.YearDay() {
 			wd = false
 		}
 	}
 	return wd
 }
 
-func GetFirstBusinessDay(h_date time.Time, holidays Holidays) time.Time {
+// GetFirstBusinessDay returns either the current date or, if that is not a
+// working day, the next day that is.
+func GetFirstBusinessDay(hDate time.Time, holidays Holidays) time.Time {
 	// Short cut if it's today!
-	if CheckIsBusinessDay(h_date, holidays) {
+	if CheckIsBusinessDay(hDate, holidays) {
 		return h_date
 	}
 	first := h_date.AddDate(0, 0, 1)
@@ -59,6 +65,7 @@ func GetFirstBusinessDay(h_date time.Time, holidays Holidays) time.Time {
 	return first
 }
 
+// GetHolidaysByYear returns a list of holidays for a given year.
 func GetHolidaysByYear(year int) Holidays {
 	var hols []Holiday
 	austriaHolidays := feiertage.Österreich(year).Feiertage
@@ -76,11 +83,13 @@ func GetHolidaysByYear(year int) Holidays {
 	return localHolidays
 }
 
+// GetHolidays returns a list of holidays for the current year.
 func GetHolidays() Holidays {
 	return GetHolidaysByYear(time.Now().Year())
 }
 
-func MonthList(months string) []int {
+// monthList converts a comma-separated list of months into an array.
+func monthList(months string) []int {
 	// Take a comma-separated list of months and convert them into an array.
 	if months == "all" {
 		return []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
@@ -94,8 +103,8 @@ func MonthList(months string) []int {
 	return converted
 }
 
-func parseDate(h_date string) time.Time {
-	parsed, err := time.Parse(dateForm, h_date)
+func parseDate(hDate string) time.Time {
+	parsed, err := time.Parse(dateForm, hDate)
 	if err != nil {
 		log.Fatal(err)
 	}
