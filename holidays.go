@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wlbr/feiertage"
+	// "github.com/wlbr/feiertage"
 )
 
 const dateForm = "01-02"
@@ -24,9 +24,8 @@ type Holidays struct {
 
 // Holiday defines an individual public holiday.
 type Holiday struct {
+	time.Time
 	Name         string // Common name for this holiday
-	Date         feiertage.Feiertag
-	Yearday      int  // The day of the year on which this holiday falls.
 	NotStatutory bool // Not a legally binding holiday. May not be a free day for all employees.
 	HalfDay      bool // This is a half-day holiday.
 }
@@ -46,7 +45,7 @@ func CheckIsBusinessDay(hDate time.Time, hols Holidays) bool {
 	}
 	// check against the list of public holidays
 	for holiday := range hols.Holidays {
-		if hDate.YearDay() == hols.Holidays[holiday].Date.YearDay() {
+		if hDate.YearDay() == hols.Holidays[holiday].YearDay() {
 			wd = false
 		}
 	}
@@ -67,12 +66,12 @@ func GetFirstBusinessDay(hDate time.Time, hols Holidays) time.Time {
 	return first
 }
 
-// GetHolidaysByYear returns a list of holidays for a given year.
+/* // GetHolidaysByYear returns a list of holidays for a given year.
 func GetHolidaysByYear(year int) Holidays {
 	var hols []Holiday
 	austriaHolidays := feiertage.Österreich(year).Feiertage
 	for _, h := range austriaHolidays {
-		o := Holiday{h.Text, h, h.YearDay(), false, false}
+		o := Holiday{h.Time, h.Text, false, false}
 		hols = append(hols, o)
 	}
 
@@ -84,11 +83,13 @@ func GetHolidaysByYear(year int) Holidays {
 	}
 	return localHolidays
 }
-
+*/
+/*
 // GetHolidays returns a list of holidays for the current year.
 func GetHolidays() Holidays {
 	return GetHolidaysByYear(time.Now().Year())
 }
+*/
 
 // monthList converts a comma-separated list of months into an array.
 func monthList(months string) []int {
